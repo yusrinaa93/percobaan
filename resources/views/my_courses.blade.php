@@ -29,17 +29,7 @@
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="{{ route('courses') }}"><i class="fas fa-graduation-cap"></i><span>Courses</span></a></li>
-                <li class="has-submenu active">
-                    <div class="menu-item-wrapper">
-                        <a href="{{ route('my-courses') }}" class="menu-link"><i class="fas fa-book-open"></i><span>My courses</span></a>
-                        <span class="submenu-toggle"><i class="fas fa-chevron-down submenu-arrow"></i></span>
-                    </div>
-                    <ul class="submenu">
-                        <li><a href="{{ route('duty') }}"><i class="fas fa-tasks"></i><span>Duty</span></a></li>
-                        <li><a href="{{ route('exam') }}"><i class="fas fa-pencil-alt"></i><span>Exam</span></a></li>
-                        <li><a href="{{ route('certificate') }}"><i class="fas fa-certificate"></i><span>Certificate</span></a></li>
-                    </ul>
-                </li>
+                <li class="active"><a href="{{ route('my-courses') }}"><i class="fas fa-book-open"></i><span>My courses</span></a></li>
             </ul>
         </nav>
         <div class="sidebar-footer">
@@ -74,73 +64,30 @@
         </header>
         <section class="content-section">
             <h2>MY COURSE</h2>
-            {{-- Tabel Jadwal (JOIN ZOOM) --}}
-            <div class="content-card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th> <th>DATE</th> <th>TIME</th> <th>CATEGORY</th> <th>ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($schedules as $schedule)
-                            <tr>
-                                <td>{{ $schedule->id }}</td>
-                                <td>{{ $schedule->start_time->format('l, d F Y') }}</td>
-                                <td>{{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}</td>
-                                <td>{{ $schedule->category }}</td>
-                                <td><a href="{{ $schedule->zoom_link }}" target="_blank" class="btn btn-zoom">JOIN ZOOM</a></td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" style="text-align: center;">Belum ada jadwal yang tersedia.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
 
-            {{-- Tabel Materi (PRESENSI) --}}
-            <div class="content-card">
-                <div class="search-bar">
-                    <input type="text" placeholder="Search for training sessions">
-                    <button class="btn btn-search">Cari</button>
+            @forelse ($courses as $course)
+                <div class="course-item-card">
+                    <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80" alt="Course Image" class="course-card-image">
+                    <div class="course-card-content">
+                        <h3>{{ $course->title }}</h3>
+                        <p class="course-card-category">Pelatihan Pendamping</p>
+                        <div class="progress-wrapper">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                <span>Progress</span>
+                                <span>0%</span>
+                            </div>
+                            <div class="progress-bar" style="height:10px;background:#e5e7eb;border-radius:6px;overflow:hidden;">
+                                <div style="width:0%;height:100%;background:#10b981;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top:16px;">
+                            <a href="{{ route('my-courses.show', $course->id) }}" class="btn btn-register"><span>LANJUTKAN BELAJAR</span></a>
+                        </div>
+                    </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th> <th>DATE</th> <th>TIME</th> <th>MATERI</th> <th>TIME PRESENCE</th> <th>ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                         @forelse ($schedules as $schedule)
-                            <tr>
-                                <td>{{ $schedule->id }}</td>
-                                <td>{{ $schedule->start_time->format('l, d M Y') }}</td>
-                                <td>{{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}</td>
-                                <td>{{ $schedule->category }}</td>
-                                <td>{{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}</td>
-                                <td>
-                                    {{-- Logika Final Tombol Presensi --}}
-                                    @if($schedule->has_attended)
-                                        <button class="btn btn-info" disabled>
-                                            <i class="fas fa-check-circle"></i> SUDAH PRESENSI
-                                        </button>
-                                    @elseif($schedule->is_presence_active)
-                                        <a href="#" class="btn btn-presence" data-schedule-id="{{ $schedule->id }}">PRESENSI</a>
-                                    @else
-                                        <button class="btn btn-disabled" disabled>PRESENSI DITUTUP</button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" style="text-align: center;">Belum ada materi yang tersedia.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            @empty
+                <div class="content-card" style="text-align:center;">Belum ada kursus yang Anda ambil.</div>
+            @endforelse
         </section>
     </main>
 </div>
@@ -186,58 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- FUNGSI 4: LOGIKA TOMBOL PRESENSI ---
-    document.querySelectorAll('.btn-presence').forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.preventDefault(); 
-
-            const scheduleId = this.dataset.scheduleId;
-            const buttonElement = this;
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            fetch("{{ route('presence.store') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    schedule_id: scheduleId
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Server merespons dengan error!');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Anda telah berhasil melakukan presensi.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-
-                    // Ubah tombol menjadi 'SUDAH PRESENSI' dengan warna biru
-                    buttonElement.outerHTML = `
-                        <button class="btn btn-info" disabled>
-                            <i class="fas fa-check-circle"></i> SUDAH PRESENSI
-                        </button>
-                    `;
-                } else {
-                    Swal.fire('Gagal', data.message || 'Terjadi kesalahan.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Tidak dapat terhubung ke server.', 'error');
-            });
-        });
-    });
+    // (Tidak ada interaksi khusus di halaman ini)
 });
 </script>
 </body>

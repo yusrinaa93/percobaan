@@ -25,6 +25,13 @@ class CourseResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull(),
+                Forms\Components\FileUpload::make('image_path')
+                    ->label('Gambar/Cover')
+                    ->image()
+                    ->directory('courses')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->columnSpanFull(),
                 Forms\Components\RichEditor::make('description')
                     ->label('Deskripsi')
                     ->columnSpanFull(),

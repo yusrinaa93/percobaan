@@ -46,17 +46,7 @@
             <ul>
                 {{-- Menggunakan helper route() untuk link yang lebih baik --}}
                 <li class="active"><a href="{{ route('courses') }}"><i class="fas fa-graduation-cap"></i><span>Courses</span></a></li>
-                <li class="has-submenu">
-                    <div class="menu-item-wrapper">
-                        <a href="{{ route('my-courses') }}" class="menu-link"><i class="fas fa-book-open"></i><span>My courses</span></a>
-                        <span class="submenu-toggle"><i class="fas fa-chevron-down submenu-arrow"></i></span>
-                    </div>
-                    <ul class="submenu">
-                        <li><a href="{{ route('duty') }}"><i class="fas fa-tasks"></i><span>Duty</span></a></li>
-                        <li><a href="{{ route('exam') }}"><i class="fas fa-pencil-alt"></i><span>Exam</span></a></li>
-                        <li><a href="{{ route('certificate') }}"><i class="fas fa-certificate"></i><span>Certificate</span></a></li>
-                    </ul>
-                </li>
+                <li><a href="{{ route('my-courses') }}"><i class="fas fa-book-open"></i><span>My courses</span></a></li>
             </ul>
         </nav>
         <div class="sidebar-footer">
@@ -104,7 +94,8 @@
             {{-- Loop $courses yang dikirim dari CourseController --}}
             @forelse ($courses as $course)
                 <div class="course-item-card">
-                    <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80" alt="Suasana Pelatihan" class="course-card-image">
+                    @php($cover = $course->image_path ? asset('storage/'.$course->image_path) : 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80')
+                    <img src="{{ $cover }}" alt="Gambar Pelatihan" class="course-card-image">
                     <div class="course-card-content">
                         
                         {{-- Judul dinamis dari database --}}
@@ -117,13 +108,13 @@
                         <div>{!! $course->description !!}</div>
                         
                         {{-- Logika Pendaftaran (ini sudah benar dari file Anda) --}}
-                        @if (isset($isRegistered) && $isRegistered)
+                        @if (isset($registeredCourseIds) && $registeredCourseIds->contains($course->id))
                             <div class="btn btn-disabled">
                                 <i class="fas fa-check-circle"></i>
                                 <span>ANDA SUDAH TERDAFTAR</span>
                             </div>
                         @else
-                            <a href="{{ route('course.register.form') }}" class="btn btn-register">
+                            <a href="{{ route('course.register.form', ['course' => $course->id]) }}" class="btn btn-register">
                                 <i class="fas fa-clipboard-check"></i>
                                 <span>REGISTER COURSE</span>
                             </a>
@@ -150,17 +141,8 @@
 
 {{-- Kode JavaScript tidak perlu diubah --}}
 <script>
-    // --- FUNGSI UNTUK SUBMENU & SIDEBAR (JANGAN DIHAPUS) ---
-    document.addEventListener('DOMContentLoaded', function() {
-        const activeSubmenuLink = document.querySelector('.sidebar-nav .submenu a.active');
-        const activeParentLink = document.querySelector('.sidebar-nav li.has-submenu.active');
-        if (activeSubmenuLink || activeParentLink) {
-            const parentLi = document.querySelector('li.has-submenu');
-            if (parentLi) {
-                parentLi.classList.add('open');
-            }
-        }
-    });
+    // --- SIDEBAR TOGGLE ---
+    document.addEventListener('DOMContentLoaded', function() {});
     const sidebar = document.getElementById('sidebar');
     const openToggle = document.getElementById('sidebar-toggle-open');
     const closeToggle = document.getElementById('sidebar-toggle-close');
@@ -168,16 +150,7 @@
         openToggle.addEventListener('click', () => sidebar.classList.add('open'));
         closeToggle.addEventListener('click', () => sidebar.classList.remove('open'));
     }
-    document.querySelectorAll('.submenu-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            const parentLi = this.closest('li.has-submenu');
-            if (parentLi) {
-                parentLi.classList.toggle('open');
-            }
-        });
-    });
+    // tidak ada submenu lagi
 
  window.addEventListener('load', function() {
     const profileDropdown = document.querySelector('.profile-dropdown');

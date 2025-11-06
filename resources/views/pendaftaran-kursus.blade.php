@@ -17,6 +17,18 @@
         {{-- Menggunakan helper route() dan @csrf --}}
         <form id="registrationForm" action="{{ route('course.register.store') }}" method="POST">
             @csrf
+            {{-- Pilih Course --}}
+            <div style="margin-bottom: 15px;">
+                <label for="course_id" style="display:block; margin-bottom:5px; color:#444; font-size:14px;">Pilih Pelatihan</label>
+                <select id="course_id" name="course_id" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+                    <option value="" disabled {{ empty($selected_course_id) ? 'selected' : '' }}>-- pilih --</option>
+                    @foreach(($courses ?? []) as $course)
+                        <option value="{{ $course->id }}" {{ (isset($selected_course_id) && $selected_course_id == $course->id) ? 'selected' : '' }}>
+                            {{ $course->title }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
             {{-- Field Nama Lengkap (Bisa Diedit) --}}
             <div style="margin-bottom: 15px;">

@@ -20,6 +20,10 @@ class DutyResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('course_id')
+                    ->label('Course')
+                    ->relationship('course', 'title')
+                    ->required(),
                 Forms\Components\TextInput::make('name')->required()->columnSpanFull(),
                 Forms\Components\RichEditor::make('description')->columnSpanFull(),
                 Forms\Components\DateTimePicker::make('deadline')->required(),
@@ -30,6 +34,7 @@ class DutyResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('course.title')->label('Course'),
                 Tables\Columns\TextColumn::make('name'),
                 Tables\Columns\TextColumn::make('deadline')->dateTime('d M Y, H:i'),
             ])

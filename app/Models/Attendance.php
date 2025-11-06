@@ -11,4 +11,9 @@ class Attendance extends Model
         'user_id',
         'schedule_id',
     ];
+
+    public function schedule()
+    {
+        return $this->belongsTo(Schedule::class);
+    }
 }

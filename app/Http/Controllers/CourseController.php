@@ -14,16 +14,13 @@ class CourseController extends Controller
      */
     public function index()
     {
-        $isRegistered = false; // Default: anggap pengguna belum terdaftar
-        $courses = []; // Default: kursus kosong
+        $registeredCourseIds = collect();
+        $courses = [];
 
         // Cek apakah ada pengguna yang sedang login
         if (Auth::check()) {
-            // Ambil email pengguna yang sedang login
-            $userEmail = Auth::user()->email;
-            
-            // Cek apakah email tersebut ada di tabel 'pendaftar'
-            $isRegistered = Pendaftar::where('email', $userEmail)->exists();
+            $registeredCourseIds = \App\Models\CourseRegistration::where('user_id', Auth::id())
+                ->pluck('course_id');
         }
 
         // AMBIL SEMUA KURSUS DARI DATABASE
@@ -32,8 +29,8 @@ class CourseController extends Controller
 
         // Kirim SEMUA variabel ke view
         return view('courses', [
-            'isRegistered' => $isRegistered,
-            'courses' => $courses // <-- KIRIM DATA KURSUS
+            'registeredCourseIds' => $registeredCourseIds,
+            'courses' => $courses
         ]);
     }
 }

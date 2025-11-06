@@ -21,8 +21,8 @@ Route::get('/about', function () {
     return view('about');
 });
 
-// Rute untuk menampilkan form pendaftaran kursus
-Route::get('/pendaftaran-kursus', [CourseRegistrationController::class, 'create'])->name('course.register.form');
+// Rute untuk menampilkan form pendaftaran kursus (opsional pilih course)
+Route::get('/pendaftaran-kursus/{course?}', [CourseRegistrationController::class, 'create'])->name('course.register.form');
 
 // Rute untuk menyimpan data dari form pendaftaran kursus
 Route::post('/pendaftaran-kursus', [CourseRegistrationController::class, 'store'])->name('course.register.store');
@@ -54,6 +54,8 @@ Route::get('/duty', [DutyController::class, 'index'])->name('duty');
     Route::post('/duty/{id}/upload', [DutyController::class, 'upload'])->name('duty.upload');
 
 Route::get('/my-courses/exam', [ExamController::class, 'index'])->name('exam');
+// Taruh route dinamis SETELAH route spesifik agar tidak tertangkap sebagai parameter
+Route::get('/my-courses/{course}', [MyCourseController::class, 'show'])->name('my-courses.show');
 Route::get('/exams/start/{exam}', [ExamController::class, 'show'])->name('exams.show');
 Route::post('/exams/submit/{exam}', [ExamController::class, 'submit'])->name('exams.submit');
 Route::get('/exams/result/{examResult}', [ExamController::class, 'result'])->name('exams.result');

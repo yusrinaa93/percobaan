@@ -14,6 +14,7 @@ class Schedule extends Model
      * Atribut yang dapat diisi secara massal.
      */
     protected $fillable = [
+        'course_id',
         'category',
         'start_time', // <-- Perbarui ini
         'end_time',   // <-- Tambahkan ini
@@ -28,4 +29,5 @@ class Schedule extends Model
         'end_time' => 'datetime',   // <-- Pastikan ini ada
     ];
     public function attendances() { return $this->hasMany(Attendance::class); }
+    public function course() { return $this->belongsTo(Course::class); }
 }

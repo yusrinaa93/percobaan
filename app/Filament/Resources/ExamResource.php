@@ -26,6 +26,10 @@ class ExamResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('course_id')
+                    ->label('Course')
+                    ->relationship('course', 'title')
+                    ->required(),
                 // Ganti 'name' menjadi 'title' agar sesuai migrasi
                 TextInput::make('title') 
                     ->label('Judul Ujian')
@@ -44,6 +48,7 @@ class ExamResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('course.title')->label('Course'),
                 // Ganti 'name' menjadi 'title'
                 TextColumn::make('title')->searchable(),
                 // Tampilkan deskripsi

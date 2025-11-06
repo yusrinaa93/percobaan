@@ -16,6 +16,7 @@ class Duty extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'course_id',
         'name',
         'description',
         'deadline',
@@ -38,5 +39,10 @@ class Duty extends Model
     public function submissions()
     {
         return $this->hasMany(DutySubmission::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
     }
 }

@@ -80,7 +80,7 @@
                     {{ $result->score }}
                 </h1>
                 
-                <a href="{{ route('exam') }}" class="btn btn-start" style="margin-top: 20px;">Kembali ke Daftar Ujian</a>
+                <a href="{{ route('my-courses.show', $result->exam->course_id) }}#tab-ujian" class="btn btn-start" style="margin-top: 20px;">Kembali ke Materi Pelatihan</a>
 
             </div>
         </section>

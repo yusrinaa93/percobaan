@@ -13,6 +13,11 @@ class Exam extends Model
     use HasFactory;
 
     // ... (properti $fillable, dll. biarkan saja) ...
+    protected $fillable = [
+        'title',
+        'description',
+        'course_id',
+    ];
 
     /**
      * ==========================================================
@@ -35,6 +40,11 @@ class Exam extends Model
     {
         // Ganti ExamResult::class dengan model hasil ujian Anda
         return $this->hasMany(ExamResult::class); 
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
     }
 
     /**

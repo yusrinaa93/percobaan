@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Models\Course;
 
 // SEMUA 'use' statement HARUS DI SINI, di luar class
 class ScheduleResource extends Resource
@@ -21,6 +22,10 @@ class ScheduleResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('course_id')
+                    ->label('Course')
+                    ->relationship('course', 'title')
+                    ->required(),
                 Forms\Components\TextInput::make('category')
                     ->label('Nama/Kategori Jadwal')
                     ->required()

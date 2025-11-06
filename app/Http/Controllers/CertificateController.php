@@ -44,58 +44,55 @@ class CertificateController extends Controller
         $user = Auth::user();
         $pendaftarData = Pendaftar::where('email', $user->email)->first();
 
-        // Cek apakah user sudah pernah generate sertifikat ini?
-        $existingCertificate = Certificate::where('user_id', $user->id)
-                                         ->where('course_id', $course->id) // (Kita akan pakai ini)
-                                         ->first();
-
-        if ($existingCertificate) {
-            // SKENARIO A: CETAK ULANG
-            return view('certificate.form', [
-                'user' => $user, 
-                'course' => $course,
-                'existingData' => $existingCertificate, // Data ada
-                'pendaftarData' => $pendaftarData 
-            ]);
-        }
-
         // Cek apakah Admin sudah "meluncurkan" sertifikat
         if (!$course->is_certificate_active) {
             return view('certificate.gagal', ['reasons' => ['Sertifikat untuk pelatihan ini belum diluncurkan oleh Admin.']]);
         }
 
-        // Cek Nilai dan Presensi
-        $examScore = ExamResult::where('user_id', $user->id)->first()->score ?? 0;
+        // Hitung kelayakan untuk course ini (berlaku juga untuk cetak ulang)
+        $examScore = ExamResult::where('user_id', $user->id)
+            ->whereHas('exam', function ($q) use ($course) { $q->where('course_id', $course->id); })
+            ->avg('score') ?? 0;
+
         $dutyScore = DutySubmission::where('user_id', $user->id)
-                                   ->whereNotNull('score')
-                                   ->avg('score') ?? 0;
+            ->whereNotNull('score')
+            ->whereHas('duty', function ($q) use ($course) { $q->where('course_id', $course->id); })
+            ->avg('score') ?? 0;
 
-        $averageScore = ($examScore + $dutyScore) / 2;
-        $attendanceCount = Attendance::where('user_id', $user->id)->count();
+        $attendanceCount = Attendance::where('user_id', $user->id)
+            ->whereHas('schedule', function ($q) use ($course) { $q->where('course_id', $course->id); })
+            ->count();
 
+        // Kriteria lulus: exam >= 50, duty >= 50, presensi >= 3
         $syaratGagal = [];
-        if ($averageScore < 50) {
-            $syaratGagal[] = "Nilai rata-rata Ujian dan Tugas Anda belum mencapai 50 (Nilai Anda: $averageScore)";
+        $examDisp = number_format((float) $examScore, 0);
+        $dutyDisp = number_format((float) $dutyScore, 0);
+        if ($examScore < 50) {
+            $syaratGagal[] = "Nilai ujian minimum 50 (Nilai Anda: $examDisp)";
+        }
+        if ($dutyScore < 50) {
+            $syaratGagal[] = "Nilai tugas minimum 50 (Nilai Anda: $dutyDisp)";
         }
         if ($attendanceCount < 3) {
-            $syaratGagal[] = "Presensi Anda minimal harus 3 kali (Presensi Anda: $attendanceCount kali)";
+            $syaratGagal[] = "Presensi minimum 3 kali (Presensi Anda: $attendanceCount)";
         }
 
         if (!empty($syaratGagal)) {
-            // SKENARIO B: GAGAL
+            // Tidak memenuhi syarat -> tampilkan alasan
             return view('certificate.gagal', ['reasons' => $syaratGagal]);
-        } else {
-            // SKENARIO C: LULUS (Pertama kali)
-            return view('certificate.form', [
-                'user' => $user, 
-                'course' => $course,
-                'pendaftarData' => $pendaftarData,
-                // --- PERBAIKAN DI SINI ---
-                // Kita tetap harus mengirim 'existingData', meskipun nilainya null.
-                // $existingCertificate sudah didefinisikan di atas dan bernilai null di sini.
-                'existingData' => $existingCertificate 
-            ]);
         }
+
+        // Jika memenuhi syarat, tampilkan form (baik cetak pertama maupun ulang)
+        $existingCertificate = Certificate::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+
+        return view('certificate.form', [
+            'user' => $user,
+            'course' => $course,
+            'pendaftarData' => $pendaftarData,
+            'existingData' => $existingCertificate,
+        ]);
     }
 
     /**
@@ -104,6 +101,28 @@ class CertificateController extends Controller
     public function generate(Request $request, Course $course)
     {
         $user = Auth::user();
+
+        // Recheck eligibility server-side to prevent bypass
+        $examScore = ExamResult::where('user_id', $user->id)
+            ->whereHas('exam', function ($q) use ($course) { $q->where('course_id', $course->id); })
+            ->avg('score') ?? 0;
+
+        $dutyScore = DutySubmission::where('user_id', $user->id)
+            ->whereNotNull('score')
+            ->whereHas('duty', function ($q) use ($course) { $q->where('course_id', $course->id); })
+            ->avg('score') ?? 0;
+
+        $attendanceCount = Attendance::where('user_id', $user->id)
+            ->whereHas('schedule', function ($q) use ($course) { $q->where('course_id', $course->id); })
+            ->count();
+
+        if ($examScore < 50 || $dutyScore < 50 || $attendanceCount < 3) {
+            return view('certificate.gagal', ['reasons' => [
+                "Nilai ujian minimal 50 (Anda: $examScore)",
+                "Nilai tugas minimal 50 (Anda: $dutyScore)",
+                "Presensi minimal 3 (Anda: $attendanceCount)",
+            ]]);
+        }
 
         // 1. Ambil & Validasi data FINAL dari form
         $validatedData = $request->validate([
